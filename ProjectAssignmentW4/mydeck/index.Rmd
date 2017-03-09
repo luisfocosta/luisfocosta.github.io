@@ -1,0 +1,104 @@
+---
+title       : "Analysis of US Weather Events and impact on Public Health and Property Damage"
+subtitle    : 
+author      : "Luis Costa"
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+
+This report is based on the U.S. National Oceanic and Atmospheric Administration (NOAA) database to assess human and property costs associated with specific weather event types.
+
+In this report I hope to address these questions:
+
+1. Across the United States, which types of events (as indicated in the 𝙴𝚅𝚃𝚈𝙿𝙴 variable) are most harmful with respect to population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+
+This data analysis is exploratory and the results can be further fine tuned by curating the dataset.
+
+(This is a report based on my work for Reproducible Research course. Full report can be found here: http://rpubs.com/luisfocosta/256259)
+
+````{r cache=TRUE, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+storm_data <- read.csv("storm_data.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE, na.strings="NA")
+event_types <- unique(storm_data$EVTYPE)
+n_event_types <- length(event_types)
+````
+
+---
+
+(Data analysis withheld)
+
+The event types (`r n_event_types`) records) which will be assessed are:
+
+````{r echo=FALSE, cache=TRUE}
+print(as.data.frame(event_types))
+````
+
+---
+
+## Results
+
+Which types of events are most harmful with respect to population health?
+
+```{r echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+events <- as.data.frame(matrix(ncol=3,nrow=n_event_types))
+names(events) <- c("Event_Type","HealthImpact","Damage")
+#Calculate the sum of fatalities/injuries/damage per each event type: this will be our final table!
+for (i in 1:length(event_types)) {
+      events[i,1] <- event_types[i]
+      events[i,2] <- sum(as.numeric(storm_data[storm_data$EVTYPE == event_types[i],]$HEALTHIMPACT,na.rm=TRUE))
+      events[i,3] <- sum(as.numeric(storm_data[storm_data$EVTYPE == event_types[i],]$DAMAGE,na.rm=TRUE))
+}
+#events[order(events$Event_Type),]
+
+
+fatalities_data <- events[order(events$HealthImpact,decreasing = TRUE),]
+
+#The following is needed to order the ggplot x-axis!
+fatalities_data$Event_Type <- factor(fatalities_data$Event_Type,
+                                     levels = fatalities_data$Event_Type[order(fatalities_data$HealthImpact, decreasing=TRUE)])
+ggplot(data=fatalities_data, aes(x=Event_Type, y=HealthImpact, fill=HealthImpact)) +
+   geom_bar(stat="identity") + xlab ("Event Type") + ylab ("# Fatalities+Injuries") +
+   scale_fill_gradientn(colors=c("yellow","red")) + 
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   ggtitle("Fatalities / Event Type")
+
+````
+
+---
+
+Which types of events have the greatest economic consequences?
+
+```{r echo=FALSE}
+library(ggplot2)
+damage_data <- events[order(events$Damage,decreasing = TRUE),]
+
+#The following is needed to order the ggplot x-axis!
+damage_data$Event_Type <- factor(damage_data$Event_Type,
+                                     levels = damage_data$Event_Type[order(damage_data$Damage, decreasing=TRUE)])
+ggplot(data=damage_data, aes(x=Event_Type, y=Damage/1000000000, fill=Damage)) +
+   geom_bar(stat="identity") + xlab ("Event Type") + ylab ("$ Damage (billion usd)") +
+   scale_fill_gradientn(colors=c("yellow","red")) + 
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   ggtitle("Damage / Event Type")
+````
+
+
+
+
+

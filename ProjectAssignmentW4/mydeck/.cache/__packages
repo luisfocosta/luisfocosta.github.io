@@ -1,0 +1,8 @@
+base
+shiny
+ggplot2
+dplyr
+readr
+devtools
+slidify
+gridExtra
